@@ -1,0 +1,6 @@
+# creds and token files
+credentials.json
+token.json
+
+# sys files
+.DS_Store
