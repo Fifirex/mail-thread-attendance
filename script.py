@@ -22,23 +22,42 @@ def Looker(str):
             break
     return newStr
 
-def Writer(plus_list, minus_list):
+def Writer(plus_list, minus_list, plus_ctr, minus_ctr):
     wb = xl.Workbook()
     sheet = wb.add_sheet('Sheet 1', cell_overwrite_ok=True)
-    style_string = "font: bold on; borders: bottom dashed"
+
+    style_string = "font: bold on;\
+                    align: wrap on;\
+                    borders: left thick, right thick, bottom thick, top thick"
     style = xl.easyxf(style_string)
     sheet.write(0, 0, "PLUS ONES", style = style)
     sheet.write(0, 1, "MINUS ONES", style = style)
+    sheet.write(1, 3, "RESP_CTR", style = style)
+    sheet.write(2, 3, "PLUS_CTR", style = style)
+    sheet.write(3, 3, "MINS_CTR", style = style)
+
+    style_string = "font: bold off;\
+                    align: wrap on;\
+                    borders: left thick, right thick, bottom thick, top thick"
+    style = xl.easyxf(style_string)
+    sheet.write(1, 4, str(plus_ctr + minus_ctr), style = style)
+    sheet.write(2, 4, str(plus_ctr), style = style)
+    sheet.write(3, 4, str(minus_ctr), style = style)
+
+    style_string = "align: wrap on"
+    style = xl.easyxf(style_string)
     row = 1
     for email in plus_list:
-        sheet.write(row, 0, Looker(email))
+        sheet.write(row, 0, Looker(email), style = style)
         row+=1
+
     row = 1
     for email in minus_list:
-        sheet.write(row, 1, Looker(email))
+        sheet.write(row, 1, Looker(email), style = style)
         row+=1
+
     wb.save('autoGenAttendance.xls')
-    print('xls is generated')
+    print('xls is generated!!')
 
 def counter(service, user_id='me'):
     threads = service.users().threads().list(userId=user_id).execute().get('threads', [])
@@ -53,8 +72,6 @@ def counter(service, user_id='me'):
                 subject = header['value']
                 if (subject == SEARCH_SUBJECT):
                     print ("Found the thread!!")
-                    nmsgs = len(tdata['messages'])
-                    print ("nmsgs = %d" % nmsgs)
                     flag = True
                 break
 
@@ -65,25 +82,34 @@ def counter(service, user_id='me'):
             minus_list = []
             for Dmsgs in tdata['messages']:
                 if Dmsgs['snippet'][:2] == SEARCH_MSG:
-                    plus_ctr += 1
                     msg = Dmsgs['payload']
                     for header in msg['headers']:
                         if header['name'] == 'From':
-                            plus_list.append(header['value'])
+                            if(plus_list.count(header['value']) <= 0):
+                                plus_list.append(header['value'])
+                                plus_ctr += 1
+                                if(minus_list.count(header['value']) > 0):
+                                    minus_list.pop(minus_list.index(header['value']))
+                                    minus_ctr -= 1
                             break
 
                 elif Dmsgs['snippet'][:2] == SEARCH_MSG_NEG:
-                    minus_ctr += 1
                     msg = Dmsgs['payload']
                     for header in msg['headers']:
                         if header['name'] == 'From':
-                            minus_list.append(header['value'])
+                            if(minus_list.count(header['value']) <= 0):
+                                minus_list.append(header['value'])
+                                minus_ctr += 1
+                                if(plus_list.count(header['value']) > 0):
+                                    plus_list.pop(plus_list.index(header['value']))
+                                    plus_ctr -= 1
                             break
 
             print ('plus_ctr : %d' % plus_ctr)
-            print ('minus_ctr : %d' % minus_ctr)
+            print ('mins_ctr : %d' % minus_ctr)
             break
-    Writer(plus_list, minus_list)
+
+    Writer(plus_list, minus_list, plus_ctr, minus_ctr)
 
 def main():
     creds = None
