@@ -11,6 +11,17 @@ SEARCH_SUBJECT = 'Meeting: 15th July 2021 @5pm'
 SEARCH_MSG = '+1'
 SEARCH_MSG_NEG = '-1'
 
+def Looker(str):
+    newStr = []
+    flag = False
+    for i in range(len(str)):
+        if(str[i].isalpha() or str[i] == ' '):
+            flag = True
+            newStr.append(str[i])
+        elif flag:
+            break
+    return newStr
+
 def Writer(plus_list, minus_list):
     wb = xl.Workbook()
     sheet = wb.add_sheet('Sheet 1', cell_overwrite_ok=True)
@@ -20,11 +31,11 @@ def Writer(plus_list, minus_list):
     sheet.write(0, 1, "MINUS ONES", style = style)
     row = 1
     for email in plus_list:
-        sheet.write(row, 0, email)
+        sheet.write(row, 0, Looker(email))
         row+=1
     row = 1
     for email in minus_list:
-        sheet.write(row, 1, email)
+        sheet.write(row, 1, Looker(email))
         row+=1
     wb.save('autoGenAttendance.xls')
     print('xls is generated')
