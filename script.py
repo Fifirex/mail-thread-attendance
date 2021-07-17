@@ -1,5 +1,6 @@
 from __future__ import print_function
 import os.path
+import xlwt as xl
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
@@ -9,6 +10,24 @@ SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
 SEARCH_SUBJECT = 'Meeting: 15th July 2021 @5pm'
 SEARCH_MSG = '+1'
 SEARCH_MSG_NEG = '-1'
+
+def Writer(plus_list, minus_list):
+    wb = xl.Workbook()
+    sheet = wb.add_sheet('Sheet 1', cell_overwrite_ok=True)
+    style_string = "font: bold on; borders: bottom dashed"
+    style = xl.easyxf(style_string)
+    sheet.write(0, 0, "PLUS ONES", style = style)
+    sheet.write(0, 1, "MINUS ONES", style = style)
+    row = 1
+    for email in plus_list:
+        sheet.write(row, 0, email)
+        row+=1
+    row = 1
+    for email in minus_list:
+        sheet.write(row, 1, email)
+        row+=1
+    wb.save('autoGenAttendance.xls')
+    print('xls is generated')
 
 def counter(service, user_id='me'):
     threads = service.users().threads().list(userId=user_id).execute().get('threads', [])
@@ -49,10 +68,11 @@ def counter(service, user_id='me'):
                         if header['name'] == 'From':
                             minus_list.append(header['value'])
                             break
-            
+
             print ('plus_ctr : %d' % plus_ctr)
             print ('minus_ctr : %d' % minus_ctr)
             break
+    Writer(plus_list, minus_list)
 
 def main():
     creds = None
