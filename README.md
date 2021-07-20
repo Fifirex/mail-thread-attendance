@@ -2,7 +2,13 @@ This is a mail thread attendance counter, which takes in a subject string `SEARC
 
 It also reads the `snippet` for the reason in case of a `SEARCH_MSG_NEG` hit and exports those to the excel sheet as well.
 
-It finally makes a table in the excel summarising the attendance on that day. 
+It finally makes a table in the excel summarising the attendance on that day. For example:
+
+DATE | 15 July 2021
+------------ | -------------
+**RES_CTR** | 37
+**PLUS_CTR** | 31
+**MINUS_CTR** | 6
 
 The files `autoGenAttendance.xls` is not been committed to protect the privacy of the members. `credentials.json` and `token.json` have not been committed as they contain the API token for the Gmail API used in the script.
 
