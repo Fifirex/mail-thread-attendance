@@ -10,6 +10,8 @@ SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
 SEARCH_SUBJECT = 'Meeting: 15th July 2021 @5pm'
 SEARCH_MSG = '+1'
 SEARCH_MSG_NEG = '-1'
+XL_PATH = 'autoGenAttendance.xls'
+DATE = '15 July 2021'
 
 def Looker(str):
     newStr = []
@@ -22,9 +24,15 @@ def Looker(str):
             break
     return newStr
 
-def Writer(plus_list, minus_list, plus_ctr, minus_ctr):
+def Writer(plus_list, minus_list, plus_ctr, minus_ctr, reason_list):
     wb = xl.Workbook()
-    sheet = wb.add_sheet('Sheet 1', cell_overwrite_ok=True)
+    sheet = wb.add_sheet(DATE, cell_overwrite_ok=True)
+    # column width adjusted as per need (taken from width.py)
+    sheet.col(0).width = 6092
+    sheet.col(1).width = 6092
+    sheet.col(2).width = 720*20
+    sheet.col(3).width = 2769
+    sheet.col(4).width = 2769
 
     style_string = "font: bold on;\
                     align: wrap on;\
@@ -32,17 +40,20 @@ def Writer(plus_list, minus_list, plus_ctr, minus_ctr):
     style = xl.easyxf(style_string)
     sheet.write(0, 0, "PLUS ONES", style = style)
     sheet.write(0, 1, "MINUS ONES", style = style)
-    sheet.write(1, 3, "RESP_CTR", style = style)
-    sheet.write(2, 3, "PLUS_CTR", style = style)
-    sheet.write(3, 3, "MINS_CTR", style = style)
+    sheet.write(0, 2, "RESPECTIVE REASONS", style = style)
+    sheet.write(1, 3, "DATE", style = style)
+    sheet.write(2, 3, "RESP_CTR", style = style)
+    sheet.write(3, 3, "PLUS_CTR", style = style)
+    sheet.write(4, 3, "MINS_CTR", style = style)
 
     style_string = "font: bold off;\
                     align: wrap on;\
                     borders: left thick, right thick, bottom thick, top thick"
     style = xl.easyxf(style_string)
-    sheet.write(1, 4, str(plus_ctr + minus_ctr), style = style)
-    sheet.write(2, 4, str(plus_ctr), style = style)
-    sheet.write(3, 4, str(minus_ctr), style = style)
+    sheet.write(1, 4, DATE, style = style)
+    sheet.write(2, 4, str(plus_ctr + minus_ctr), style = style)
+    sheet.write(3, 4, str(plus_ctr), style = style)
+    sheet.write(4, 4, str(minus_ctr), style = style)
 
     style_string = "align: wrap on"
     style = xl.easyxf(style_string)
@@ -54,9 +65,10 @@ def Writer(plus_list, minus_list, plus_ctr, minus_ctr):
     row = 1
     for email in minus_list:
         sheet.write(row, 1, Looker(email), style = style)
+        sheet.write(row, 2, reason_list[row - 1], style = style)
         row+=1
 
-    wb.save('autoGenAttendance.xls')
+    wb.save(XL_PATH)
     print('xls is generated!!')
 
 def counter(service, user_id='me'):
@@ -80,6 +92,7 @@ def counter(service, user_id='me'):
             plus_list = []
             minus_ctr = 0
             minus_list = []
+            reason_list = []
             for Dmsgs in tdata['messages']:
                 if Dmsgs['snippet'][:2] == SEARCH_MSG:
                     msg = Dmsgs['payload']
@@ -94,6 +107,16 @@ def counter(service, user_id='me'):
                             break
 
                 elif Dmsgs['snippet'][:2] == SEARCH_MSG_NEG:
+                    index = 0
+                    while not Dmsgs['snippet'][index].isalpha():
+                        index+=1
+                    index2 = index
+                    while (Dmsgs['snippet'][index2 : index2+2] != "On"):
+                        index2+=1
+                    index2-=1
+                    while not Dmsgs['snippet'][index2].isalpha():
+                        index2-=1
+                    reason_list.append(Dmsgs['snippet'][index : index2+1])
                     msg = Dmsgs['payload']
                     for header in msg['headers']:
                         if header['name'] == 'From':
@@ -109,7 +132,7 @@ def counter(service, user_id='me'):
             print ('mins_ctr : %d' % minus_ctr)
             break
 
-    Writer(plus_list, minus_list, plus_ctr, minus_ctr)
+    Writer(plus_list, minus_list, plus_ctr, minus_ctr, reason_list)
 
 def main():
     creds = None
