@@ -132,6 +132,7 @@ def counter(service, user_id='me'):
                                     plus_ctr -= 1
                             break
 
+            print ('resp_ctr : %d' % (plus_ctr + minus_ctr)) 
             print ('plus_ctr : %d' % plus_ctr)
             print ('mins_ctr : %d' % minus_ctr)
             break
