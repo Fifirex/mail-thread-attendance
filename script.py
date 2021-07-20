@@ -1,5 +1,6 @@
 from __future__ import print_function
 import os.path
+import json
 import xlwt as xl
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -8,19 +9,20 @@ from google.oauth2.credentials import Credentials
 
 SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
 SCRIPT = 'https://github.com/Fifirex/mail-thread-attendance/blob/main/script.py'
-SEARCH_SUBJECT = 'Meeting: 15th July 2021 @5pm'
+SEARCH_SUBJECT = 'Meeting: 20 July 2021, @9:45pm'
 SEARCH_MSG = '+1'
 SEARCH_MSG_NEG = '-1'
-XL_PATH = 'autoGenAttendance.xls'
-DATE = '15 July 2021'
+XL_PATH = 'database/autoGenAttendance.xls'
+DATE = '20 July 2021'
+TOT_COUNT = 36
 
 def Looker(str):
-    newStr = []
+    newStr = ""
     flag = False
     for i in range(len(str)):
         if(str[i].isalpha() or str[i] == ' '):
             flag = True
-            newStr.append(str[i])
+            newStr += str[i]
         elif flag:
             break
     return newStr
@@ -28,6 +30,7 @@ def Looker(str):
 def Writer(plus_list, minus_list, plus_ctr, minus_ctr, reason_list):
     wb = xl.Workbook()
     sheet = wb.add_sheet(DATE, cell_overwrite_ok=True)
+
     # column width adjusted as per need (taken from width.py)
     sheet.col(0).width = 6092
     sheet.col(1).width = 6092
@@ -37,17 +40,44 @@ def Writer(plus_list, minus_list, plus_ctr, minus_ctr, reason_list):
 
     style_string = "font: bold on;\
                     align: wrap on, horiz centre, vert centre;\
+                    pattern: pattern solid, fore_colour gray40;\
                     borders: left thick, right thick, bottom thick, top thick"
-    style = xl.easyxf(style_string)
-    sheet.write(0, 0, "PLUS ONES", style = style)
-    sheet.write(0, 1, "MINUS ONES", style = style)
-    sheet.write(0, 2, "RESPECTIVE REASONS", style = style)
-    sheet.write_merge(0, 0, 3, 4, "SUMMARY", style = style)
-    sheet.write(1, 3, "DATE", style = style)
-    sheet.write(2, 3, "RESP_CTR", style = style)
-    sheet.write(3, 3, "PLUS_CTR", style = style)
-    sheet.write(4, 3, "MINS_CTR", style = style)
-    sheet.write(5, 3, "SCRIPT", style = style)
+    style_header = xl.easyxf(style_string)
+
+    style_string = "font: bold on;\
+                    align: wrap on, horiz centre, vert centre;\
+                    borders: left thick, right thick, bottom thick, top thick"
+    style_null = xl.easyxf(style_string)
+
+    style_string = "font: bold on;\
+                    align: wrap on, horiz centre, vert centre;\
+                    pattern: pattern solid, fore_colour gray25;\
+                    pattern: pattern solid, fore_colour light_green;\
+                    borders: left thick, right thick, bottom thick, top thick"
+    plus_header = xl.easyxf(style_string)
+
+    style_string = "font: bold on;\
+                    align: wrap on, horiz centre, vert centre;\
+                    pattern: pattern solid, fore_colour coral;\
+                    borders: left thick, right thick, bottom thick, top thick"
+    minus_header = xl.easyxf(style_string)
+
+    style_string = "font: bold on;\
+                    align: wrap on, horiz centre, vert centre;\
+                    pattern: pattern solid, fore_colour light_yellow;\
+                    borders: left thick, right thick, bottom thick, top thick"
+    null_header = xl.easyxf(style_string)
+
+    sheet.write(0, 0, "NAMES", style = style_header)
+    sheet.write(0, 1, "STATE", style = style_header)
+    sheet.write(0, 2, "RESPECTIVE REASONS", style = style_header)
+    sheet.write_merge(0, 0, 3, 4, "SUMMARY", style = style_header)
+    sheet.write(1, 3, "DATE", style = style_null)
+    sheet.write(2, 3, "RESP_CTR", style = style_null)
+    sheet.write(3, 3, "PLUS_CTR", style = plus_header)
+    sheet.write(4, 3, "MINS_CTR", style = minus_header)
+    sheet.write(5, 3, "NR_CTR", style = null_header)
+    sheet.write(6, 3, "SCRIPT", style = style_null)
 
     style_string = "font: bold off;\
                     align: wrap on, horiz centre, vert centre;\
@@ -57,20 +87,57 @@ def Writer(plus_list, minus_list, plus_ctr, minus_ctr, reason_list):
     sheet.write(2, 4, str(plus_ctr + minus_ctr), style = style)
     sheet.write(3, 4, str(plus_ctr), style = style)
     sheet.write(4, 4, str(minus_ctr), style = style)
-    sheet.write(5, 4, xl.Formula('HYPERLINK("%s";"script")' % SCRIPT), style = style)
+    sheet.write(5, 4, str(TOT_COUNT - plus_ctr - minus_ctr), style = style)
+    sheet.write(6, 4, xl.Formula('HYPERLINK("%s";"script")' % SCRIPT), style = style)
 
     style_string = "align: wrap on"
     style = xl.easyxf(style_string)
-    row = 1
-    for email in plus_list:
-        sheet.write(row, 0, Looker(email), style = style)
-        row+=1
+
+    style_string = "align: wrap on;\
+                    borders: left thin, right thin, bottom thin;\
+                    pattern: pattern solid, fore_colour gray25"
+    name_style = xl.easyxf(style_string)
+
+    style_string = "align: wrap on;\
+                    borders: left thin, right thin, bottom thin;\
+                    pattern: pattern solid, fore_colour light_green"
+    plus_style = xl.easyxf(style_string)
+
+    style_string = "align: wrap on;\
+                    borders: left thin, right thin, bottom thin;\
+                    pattern: pattern solid, fore_colour coral"
+    minus_style = xl.easyxf(style_string)
+
+    style_string = "align: wrap on;\
+                    borders: left thin, right thin, bottom thin;\
+                    pattern: pattern solid, fore_colour light_yellow"
+    null_style = xl.easyxf(style_string)
+
+    file = open("database/data.json")
+    data = json.load(file)
 
     row = 1
-    for email in minus_list:
-        sheet.write(row, 1, Looker(email), style = style)
-        sheet.write(row, 2, reason_list[row - 1], style = style)
+    for email in plus_list:
+        str1 = Looker(email)
+        sheet.write(data[str1][1], 0, data[str1][0], style = name_style)
+        sheet.write(data[str1][1], 1, "+1", style = plus_style)
+        data[str1][2] = True
         row+=1
+
+    i = 1
+    for email in minus_list:
+        str2 = Looker(email)
+        sheet.write(data[str2][1], 0, data[str2][0], style = name_style)
+        sheet.write(data[str2][1], 1, "-1", style = minus_style)
+        sheet.write(data[str2][1], 2, reason_list[i - 1], style = style)
+        data[str2][2] = True
+        row+=1
+        i+=1
+
+    for em in data:
+        if not data[em][2]:
+            sheet.write(data[em][1], 0, data[em][0], style = name_style)
+            sheet.write(data[em][1], 1, "NR", style = null_style)
 
     wb.save(XL_PATH)
     print('xls is generated!!')

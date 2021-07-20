@@ -5,8 +5,8 @@ token.json
 # sys files
 .DS_Store
 
-# output 
-autoGenAttendance.xls
+# database
+**/database
 
 # use files
 current.py
