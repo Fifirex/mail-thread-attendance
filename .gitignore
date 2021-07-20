@@ -9,4 +9,4 @@ token.json
 autoGenAttendance.xls
 
 # use files
-**/current
+current.py
