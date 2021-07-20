@@ -35,25 +35,28 @@ def Writer(plus_list, minus_list, plus_ctr, minus_ctr, reason_list):
     sheet.col(4).width = 2769
 
     style_string = "font: bold on;\
-                    align: wrap on;\
+                    align: wrap on, horiz centre;\
                     borders: left thick, right thick, bottom thick, top thick"
     style = xl.easyxf(style_string)
     sheet.write(0, 0, "PLUS ONES", style = style)
     sheet.write(0, 1, "MINUS ONES", style = style)
     sheet.write(0, 2, "RESPECTIVE REASONS", style = style)
+    sheet.write_merge(0, 0, 3, 4, "SUMMARY", style = style)
     sheet.write(1, 3, "DATE", style = style)
     sheet.write(2, 3, "RESP_CTR", style = style)
     sheet.write(3, 3, "PLUS_CTR", style = style)
     sheet.write(4, 3, "MINS_CTR", style = style)
+    sheet.write(5, 3, "SCRIPT", style = style)
 
     style_string = "font: bold off;\
-                    align: wrap on;\
+                    align: wrap on, horiz centre;\
                     borders: left thick, right thick, bottom thick, top thick"
     style = xl.easyxf(style_string)
     sheet.write(1, 4, DATE, style = style)
     sheet.write(2, 4, str(plus_ctr + minus_ctr), style = style)
     sheet.write(3, 4, str(plus_ctr), style = style)
     sheet.write(4, 4, str(minus_ctr), style = style)
+    sheet.write(5, 4, "https://sed.lol/fptw87", style = style)
 
     style_string = "align: wrap on"
     style = xl.easyxf(style_string)
