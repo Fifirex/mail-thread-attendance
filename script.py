@@ -7,6 +7,7 @@ from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 
 SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
+SCRIPT = 'https://github.com/Fifirex/mail-thread-attendance/blob/main/script.py'
 SEARCH_SUBJECT = 'Meeting: 15th July 2021 @5pm'
 SEARCH_MSG = '+1'
 SEARCH_MSG_NEG = '-1'
@@ -35,7 +36,7 @@ def Writer(plus_list, minus_list, plus_ctr, minus_ctr, reason_list):
     sheet.col(4).width = 2769
 
     style_string = "font: bold on;\
-                    align: wrap on, horiz centre;\
+                    align: wrap on, horiz centre, vert centre;\
                     borders: left thick, right thick, bottom thick, top thick"
     style = xl.easyxf(style_string)
     sheet.write(0, 0, "PLUS ONES", style = style)
@@ -49,14 +50,14 @@ def Writer(plus_list, minus_list, plus_ctr, minus_ctr, reason_list):
     sheet.write(5, 3, "SCRIPT", style = style)
 
     style_string = "font: bold off;\
-                    align: wrap on, horiz centre;\
+                    align: wrap on, horiz centre, vert centre;\
                     borders: left thick, right thick, bottom thick, top thick"
     style = xl.easyxf(style_string)
     sheet.write(1, 4, DATE, style = style)
     sheet.write(2, 4, str(plus_ctr + minus_ctr), style = style)
     sheet.write(3, 4, str(plus_ctr), style = style)
     sheet.write(4, 4, str(minus_ctr), style = style)
-    sheet.write(5, 4, "https://sed.lol/fptw87", style = style)
+    sheet.write(5, 4, xl.Formula('HYPERLINK("%s";"script")' % SCRIPT), style = style)
 
     style_string = "align: wrap on"
     style = xl.easyxf(style_string)
