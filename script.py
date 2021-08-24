@@ -9,12 +9,13 @@ from google.oauth2.credentials import Credentials
 
 SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
 SCRIPT = 'https://github.com/Fifirex/mail-thread-attendance/blob/main/script.py'
-SEARCH_SUBJECT = 'Meeting: 20 July 2021, @9:45pm'
+SEARCH_SUBJECT = 'Meeting 24th August 2021 @10pm'
 SEARCH_MSG = '+1'
+alt_SEARCH_MSG = '+ 1'
 SEARCH_MSG_NEG = '-1'
 XL_PATH = 'database/autoGenAttendance.xls'
-DATE = '20 July 2021'
-TOT_COUNT = 36
+DATE = '24 Aug 2021'
+TOT_COUNT = 30
 
 def Looker(str):
     newStr = ""
@@ -165,7 +166,7 @@ def counter(service, user_id='me'):
             minus_list = []
             reason_list = []
             for Dmsgs in tdata['messages']:
-                if Dmsgs['snippet'][:2] == SEARCH_MSG:
+                if ((Dmsgs['snippet'][:2] == SEARCH_MSG) or (Dmsgs['snippet'][:3] == alt_SEARCH_MSG)):
                     msg = Dmsgs['payload']
                     for header in msg['headers']:
                         if header['name'] == 'From':
@@ -174,6 +175,7 @@ def counter(service, user_id='me'):
                                 plus_ctr += 1
                                 if(minus_list.count(header['value']) > 0):
                                     minus_list.pop(minus_list.index(header['value']))
+                                    reason_list.pop(minus_list.index(header['value']))
                                     minus_ctr -= 1
                             break
 
@@ -187,16 +189,18 @@ def counter(service, user_id='me'):
                     index2-=1
                     while not Dmsgs['snippet'][index2].isalpha():
                         index2-=1
-                    reason_list.append(Dmsgs['snippet'][index : index2+1])
                     msg = Dmsgs['payload']
                     for header in msg['headers']:
                         if header['name'] == 'From':
-                            if(minus_list.count(header['value']) <= 0):
+                            if(minus_list.count(header['value']) > 0):
+                                reason_list[minus_list.index(header['value'])] = Dmsgs['snippet'][index : index2+1]
+                            else:
                                 minus_list.append(header['value'])
                                 minus_ctr += 1
-                                if(plus_list.count(header['value']) > 0):
-                                    plus_list.pop(plus_list.index(header['value']))
-                                    plus_ctr -= 1
+                                reason_list.append(Dmsgs['snippet'][index : index2+1])
+                            if(plus_list.count(header['value']) > 0):
+                                plus_list.pop(plus_list.index(header['value']))
+                                plus_ctr -= 1
                             break
 
             print ('resp_ctr : %d' % (plus_ctr + minus_ctr)) 
