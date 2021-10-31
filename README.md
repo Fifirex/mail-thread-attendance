@@ -10,6 +10,25 @@ DATE | 15 July 2021
 **PLUS_CTR** | 31
 **MINUS_CTR** | 6
 
-The directory `database` (which contains the output excel `autoGenAttendance.xls` and the email databse) is not been committed to protect the privacy of the membersof the organization. `credentials.json` and `token.json` have not been committed as they contain the API token for the Gmail API used in the script.
+---
+
+## Data required
+There are 2 main json files that act as look up dictionaries for the script:
+
+### 1. `database/index-map.json` 
+```json
+{<name> : [<disctionary_index>, <used_flag>]}
+```
+Used for indexing the final excel and determining the "No-Responses" with the flag.
+
+### 2. `database/name-map.json`
+```json
+{<email_snippet> : <name>}
+```
+Used for looking up the name of an email alias. It is kept to hold several alias for the same name while avoiding duplicates in the excel.
+
+---
+
+> The directory `database` (which contains the output excel `autoGenAttendance.xls` and the email databse) is not been committed to protect the privacy of the membersof the organization. `credentials.json` and `token.json` have not been committed as they contain the API token for the Gmail API used in the script.
 
 You can implement the idea for your organization (or anywhere you think you would need it). Check out the [Gmail API Documentation](https://developers.google.com/gmail/api).

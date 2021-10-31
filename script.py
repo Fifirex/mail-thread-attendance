@@ -1,3 +1,12 @@
+# created with <3 by @Fifirex
+
+# documentation for the gmail api
+# https://developers.google.com/gmail/api/v1/reference/users/messages/list
+
+# CONCERNS
+# 1. popping of reasons is a bit fishy (broke down the last time)
+#    - if it breaks again, just use the file at commit: "added colours and a master..."
+
 from __future__ import print_function
 import os.path
 import json
@@ -9,13 +18,13 @@ from google.oauth2.credentials import Credentials
 
 SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
 SCRIPT = 'https://github.com/Fifirex/mail-thread-attendance/blob/main/script.py'
-SEARCH_SUBJECT = 'Meeting 24th August 2021 @10pm'
+SEARCH_SUBJECT = 'Meet: 30 Oct 2021 @9:30pm'
 SEARCH_MSG = '+1'
-alt_SEARCH_MSG = '+ 1'
+ALT_SEARCH_MSG = '+ 1'
 SEARCH_MSG_NEG = '-1'
 XL_PATH = 'database/autoGenAttendance.xls'
-DATE = '24 Aug 2021'
-TOT_COUNT = 30
+DATE = '20 July 2021'
+TOT_COUNT = 29
 
 def Looker(str):
     newStr = ""
@@ -114,31 +123,36 @@ def Writer(plus_list, minus_list, plus_ctr, minus_ctr, reason_list):
                     pattern: pattern solid, fore_colour light_yellow"
     null_style = xl.easyxf(style_string)
 
-    file = open("database/data.json")
+    file = open("database/name-map.json")
     data = json.load(file)
+
+    file2 = open("database/index-map.json")
+    index = json.load(file2)
 
     row = 1
     for email in plus_list:
         str1 = Looker(email)
-        sheet.write(data[str1][1], 0, data[str1][0], style = name_style)
-        sheet.write(data[str1][1], 1, "+1", style = plus_style)
-        data[str1][2] = True
+        name = data[str1][0]
+        sheet.write(index[name][0], 0, name, style = name_style)
+        sheet.write(index[name][0], 1, "+1", style = plus_style)
+        index[name][1] = True
         row+=1
 
     i = 1
     for email in minus_list:
         str2 = Looker(email)
-        sheet.write(data[str2][1], 0, data[str2][0], style = name_style)
-        sheet.write(data[str2][1], 1, "-1", style = minus_style)
-        sheet.write(data[str2][1], 2, reason_list[i - 1], style = style)
-        data[str2][2] = True
+        name = data[str2][0]
+        sheet.write(index[name][0], 0, name, style = name_style)
+        sheet.write(index[name][0], 1, "-1", style = minus_style)
+        sheet.write(index[name][0], 2, reason_list[i - 1], style = style)
+        index[name][1] = True
         row+=1
         i+=1
 
-    for em in data:
-        if not data[em][2]:
-            sheet.write(data[em][1], 0, data[em][0], style = name_style)
-            sheet.write(data[em][1], 1, "NR", style = null_style)
+    for em in index:
+        if not index[em][1]:
+            sheet.write(index[data[em][0]], 0, data[em][0], style = name_style)
+            sheet.write(index[data[em][0]], 1, "NR", style = null_style)
 
     wb.save(XL_PATH)
     print('xls is generated!!')
@@ -151,6 +165,7 @@ def counter(service, user_id='me'):
 
         msg = tdata['messages'][0]['payload']
 
+        # searching for the thread
         for header in msg['headers']:
             if header['name'] == 'Subject':
                 subject = header['value']
@@ -158,28 +173,36 @@ def counter(service, user_id='me'):
                     print ("Found the thread!!")
                     flag = True
                 break
-
+        
+        # if the thread is found then get the messages
         if flag:
             plus_ctr = 0
             plus_list = []
             minus_ctr = 0
             minus_list = []
             reason_list = []
+
+            # iterating through individual mails in the thread and counting the plus and minus
             for Dmsgs in tdata['messages']:
-                if ((Dmsgs['snippet'][:2] == SEARCH_MSG) or (Dmsgs['snippet'][:3] == alt_SEARCH_MSG)):
+
+                # positive mail
+                if ((Dmsgs['snippet'][:2] == SEARCH_MSG) or (Dmsgs['snippet'][:2] == ALT_SEARCH_MSG)):
                     msg = Dmsgs['payload']
                     for header in msg['headers']:
                         if header['name'] == 'From':
                             if(plus_list.count(header['value']) <= 0):
                                 plus_list.append(header['value'])
                                 plus_ctr += 1
+                                # if the person sent a negative mail earlier: pop the name and reason
                                 if(minus_list.count(header['value']) > 0):
                                     minus_list.pop(minus_list.index(header['value']))
                                     reason_list.pop(minus_list.index(header['value']))
                                     minus_ctr -= 1
                             break
 
+                # negative mail
                 elif Dmsgs['snippet'][:2] == SEARCH_MSG_NEG:
+                    # index for reason extraction (mail ends with "On")
                     index = 0
                     while not Dmsgs['snippet'][index].isalpha():
                         index+=1
@@ -189,18 +212,20 @@ def counter(service, user_id='me'):
                     index2-=1
                     while not Dmsgs['snippet'][index2].isalpha():
                         index2-=1
+                    reason_list.append(Dmsgs['snippet'][index : index2+1])
                     msg = Dmsgs['payload']
                     for header in msg['headers']:
                         if header['name'] == 'From':
+                            # if the person sent a negative mail earlier: update the reason
                             if(minus_list.count(header['value']) > 0):
                                 reason_list[minus_list.index(header['value'])] = Dmsgs['snippet'][index : index2+1]
-                            else:
+                            if(minus_list.count(header['value']) <= 0):
                                 minus_list.append(header['value'])
                                 minus_ctr += 1
-                                reason_list.append(Dmsgs['snippet'][index : index2+1])
-                            if(plus_list.count(header['value']) > 0):
-                                plus_list.pop(plus_list.index(header['value']))
-                                plus_ctr -= 1
+                                # if the person sent a positive mail earlier: pop the name
+                                if(plus_list.count(header['value']) > 0):
+                                    plus_list.pop(plus_list.index(header['value']))
+                                    plus_ctr -= 1
                             break
 
             print ('resp_ctr : %d' % (plus_ctr + minus_ctr)) 
@@ -208,6 +233,7 @@ def counter(service, user_id='me'):
             print ('mins_ctr : %d' % minus_ctr)
             break
 
+    print (minus_list)
     Writer(plus_list, minus_list, plus_ctr, minus_ctr, reason_list)
 
 def main():
