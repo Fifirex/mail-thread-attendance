@@ -1,3 +1,5 @@
+# Mail attendance
+
 This is a mail thread attendance counter, which takes in a subject string `SEARCH_SUBJECT` and searches for specific `SEARCH_MSG` and `SEARCH_MSG_NEG` and exports all the names using the `snippet` of the mail content to a `.xls` sheet.
 
 It also reads the `snippet` for the reason in case of a `SEARCH_MSG_NEG` hit and exports those to the excel sheet as well.
