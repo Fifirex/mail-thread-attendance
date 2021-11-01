@@ -26,6 +26,7 @@ XL_PATH = 'database/autoGenAttendance.xls'
 DATE = '20 July 2021'
 TOT_COUNT = 29
 
+# looks for alias in the mail list ('alias' <'email id'>)
 def Looker(str):
     newStr = ""
     flag = False
@@ -37,6 +38,7 @@ def Looker(str):
             break
     return newStr
 
+# writes the data to the excel file
 def Writer(plus_list, minus_list, plus_ctr, minus_ctr, reason_list):
     wb = xl.Workbook()
     sheet = wb.add_sheet(DATE, cell_overwrite_ok=True)
@@ -129,19 +131,21 @@ def Writer(plus_list, minus_list, plus_ctr, minus_ctr, reason_list):
     file2 = open("database/index-map.json")
     index = json.load(file2)
 
+    # iterates through the positive list and writes on excel using the format above and Looker() function
     row = 1
     for email in plus_list:
         str1 = Looker(email)
-        name = data[str1][0]
+        name = data[str1]
         sheet.write(index[name][0], 0, name, style = name_style)
         sheet.write(index[name][0], 1, "+1", style = plus_style)
         index[name][1] = True
         row+=1
 
+    # iterates through the negative list and writes on excel using the format above and Looker() function
     i = 1
     for email in minus_list:
         str2 = Looker(email)
-        name = data[str2][0]
+        name = data[str2]
         sheet.write(index[name][0], 0, name, style = name_style)
         sheet.write(index[name][0], 1, "-1", style = minus_style)
         sheet.write(index[name][0], 2, reason_list[i - 1], style = style)
@@ -149,14 +153,17 @@ def Writer(plus_list, minus_list, plus_ctr, minus_ctr, reason_list):
         row+=1
         i+=1
 
+    # iterates through the index map and looks for the names that are not in the positive or negative list
+    # using the used_flag value in the map
     for em in index:
         if not index[em][1]:
-            sheet.write(index[data[em][0]], 0, data[em][0], style = name_style)
-            sheet.write(index[data[em][0]], 1, "NR", style = null_style)
+            sheet.write(index[data[em]], 0, data[em][0], style = name_style)
+            sheet.write(index[data[em]], 1, "NR", style = null_style)
 
     wb.save(XL_PATH)
     print('xls is generated!!')
 
+# MAIN MAN (counts the mail thread and returns the positive and negative list)
 def counter(service, user_id='me'):
     threads = service.users().threads().list(userId=user_id).execute().get('threads', [])
     flag = False
@@ -233,7 +240,6 @@ def counter(service, user_id='me'):
             print ('mins_ctr : %d' % minus_ctr)
             break
 
-    print (minus_list)
     Writer(plus_list, minus_list, plus_ctr, minus_ctr, reason_list)
 
 def main():
