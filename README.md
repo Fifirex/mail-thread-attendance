@@ -1,3 +1,5 @@
+# Mail attendance
+
 This is a mail thread attendance counter, which takes in a subject string `SEARCH_SUBJECT` and searches for specific `SEARCH_MSG` and `SEARCH_MSG_NEG` and exports all the names using the `snippet` of the mail content to a `.xls` sheet.
 
 It also reads the `snippet` for the reason in case of a `SEARCH_MSG_NEG` hit and exports those to the excel sheet as well.
@@ -15,14 +17,14 @@ DATE | 15 July 2021
 ## Data required
 There are 2 main json files that act as look up dictionaries for the script:
 
-### 1. `database/index-map.json` 
-```json
+### 1. database/index-map.json 
+```
 {<name> : [<disctionary_index>, <used_flag>]}
 ```
 Used for indexing the final excel and determining the "No-Responses" with the flag.
 
-### 2. `database/name-map.json`
-```json
+### 2. database/name-map.json
+```
 {<email_snippet> : <name>}
 ```
 Used for looking up the name of an email alias. It is kept to hold several alias for the same name while avoiding duplicates in the excel.
