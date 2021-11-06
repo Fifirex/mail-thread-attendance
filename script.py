@@ -18,12 +18,12 @@ from google.oauth2.credentials import Credentials
 
 SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
 SCRIPT = 'https://github.com/Fifirex/mail-thread-attendance/blob/main/script.py'
-SEARCH_SUBJECT = 'Meet: 30 Oct 2021 @9:30pm'
+SEARCH_SUBJECT = 'Meeting: ~~subject~~'
 SEARCH_MSG = '+1'
 ALT_SEARCH_MSG = '+ 1'
 SEARCH_MSG_NEG = '-1'
 XL_PATH = 'database/autoGenAttendance.xls'
-DATE = '20 July 2021'
+DATE = '~~date~~'
 TOT_COUNT = 29
 
 # looks for alias in the mail list ('alias' <'email id'>)
@@ -35,8 +35,7 @@ def Looker(str):
             flag = True
             newStr += str[i]
         elif flag:
-            break
-    return newStr
+            return newStr.strip()
 
 # writes the data to the excel file
 def Writer(plus_list, minus_list, plus_ctr, minus_ctr, reason_list):
@@ -135,9 +134,23 @@ def Writer(plus_list, minus_list, plus_ctr, minus_ctr, reason_list):
     row = 1
     for email in plus_list:
         str1 = Looker(email)
-        name = data[str1]
-        sheet.write(index[name][0], 0, name, style = name_style)
-        sheet.write(index[name][0], 1, "+1", style = plus_style)
+        try:
+            name = str1
+            ind = index[str1][0]
+        except:
+            try:
+                name = data[str1]
+            except:
+                with open('database/name-map.json', "r") as file:
+                    data = json.load(file)
+                print ("\n\n" + str1 + " not found in the database.\n\n")
+                name = input(" Enter the actual name for \"{}\" : ".format(str1))
+                data[str1] = name
+                with open('database/name-map.json', "w") as file:
+                    json.dump(data, file)
+            ind = index[name][0]
+        sheet.write(ind, 0, name, style = name_style)
+        sheet.write(ind, 1, "+1", style = plus_style)
         index[name][1] = True
         row+=1
 
@@ -145,10 +158,24 @@ def Writer(plus_list, minus_list, plus_ctr, minus_ctr, reason_list):
     i = 1
     for email in minus_list:
         str2 = Looker(email)
-        name = data[str2]
-        sheet.write(index[name][0], 0, name, style = name_style)
-        sheet.write(index[name][0], 1, "-1", style = minus_style)
-        sheet.write(index[name][0], 2, reason_list[i - 1], style = style)
+        try:
+            name = str2
+            ind = index[str2][0]
+        except:
+            try:
+                name = data[str2]
+            except:
+                with open('database/name-map.json', "r") as file:
+                    data = json.load(file)
+                print ("\n\n " + str2 + " not found in the database.")
+                name = input(" Enter the actual name for \"{}\" : ".format(str2))
+                data[str2] = name
+                with open('database/name-map.json', "w") as file:
+                    json.dump(data, file)
+            ind = index[name][0]
+        sheet.write(ind, 0, name, style = name_style)
+        sheet.write(ind, 1, "-1", style = minus_style)
+        sheet.write(ind, 2, reason_list[i - 1], style = style)
         index[name][1] = True
         row+=1
         i+=1
@@ -157,11 +184,11 @@ def Writer(plus_list, minus_list, plus_ctr, minus_ctr, reason_list):
     # using the used_flag value in the map
     for em in index:
         if not index[em][1]:
-            sheet.write(index[data[em]], 0, data[em][0], style = name_style)
-            sheet.write(index[data[em]], 1, "NR", style = null_style)
+            sheet.write(index[em][0], 0, em, style = name_style)
+            sheet.write(index[em][0], 1, "NR", style = null_style)
 
     wb.save(XL_PATH)
-    print('xls is generated!!')
+    print('\n\n\033[0;36mxls is generated!!\033[0m\n\n')
 
 # MAIN MAN (counts the mail thread and returns the positive and negative list)
 def counter(service, user_id='me'):
@@ -177,7 +204,7 @@ def counter(service, user_id='me'):
             if header['name'] == 'Subject':
                 subject = header['value']
                 if (subject == SEARCH_SUBJECT):
-                    print ("Found the thread!!")
+                    print ("\n\033[0;36mFound the thread!!\033[0m")
                     flag = True
                 break
         
@@ -235,9 +262,10 @@ def counter(service, user_id='me'):
                                     plus_ctr -= 1
                             break
 
-            print ('resp_ctr : %d' % (plus_ctr + minus_ctr)) 
-            print ('plus_ctr : %d' % plus_ctr)
-            print ('mins_ctr : %d' % minus_ctr)
+            print ('\033[0;33mresp_ctr   : %d\033[0m' % (plus_ctr + minus_ctr)) 
+            print ('\033[0;32mplus_ctr   : %d\033[0m' % plus_ctr)
+            print ('\033[0;31mmins_ctr   : %d\033[0m' % minus_ctr)
+            print ('\033[0;37mnoresp_ctr : %d\033[0m' % (TOT_COUNT - plus_ctr - minus_ctr))
             break
 
     Writer(plus_list, minus_list, plus_ctr, minus_ctr, reason_list)
