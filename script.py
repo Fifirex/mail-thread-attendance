@@ -26,6 +26,10 @@ XL_PATH = 'database/autoGenAttendance.xls'
 DATE = '~~date~~'
 TOT_COUNT = 29
 
+# flags for excluding some teams in the attendance
+TEAM1_FLAG = False
+TEAM2_FLAG = False
+
 # looks for alias in the mail list ('alias' <'email id'>)
 def Looker(str):
     newStr = ""
@@ -124,6 +128,12 @@ def Writer(plus_list, minus_list, plus_ctr, minus_ctr, reason_list):
                     pattern: pattern solid, fore_colour light_yellow"
     null_style = xl.easyxf(style_string)
 
+    style_string = "font: bold on;\
+                    align: wrap on;\
+                    borders: left thin, right thin, bottom thin;\
+                    pattern: pattern solid, fore_colour aqua"
+    team_style = xl.easyxf(style_string)
+
     file = open("database/name-map.json")
     data = json.load(file)
 
@@ -185,6 +195,13 @@ def Writer(plus_list, minus_list, plus_ctr, minus_ctr, reason_list):
     for em in index:
         if not index[em][1]:
             sheet.write(index[em][0], 0, em, style = name_style)
+            if (len(index[em]) == 3):
+                if (TEAM1_FLAG == True and index[em][2] == "team1"):
+                    sheet.write(index[em][0], 1, "TEAM 1", style = team_style)
+                    continue
+                elif (TEAM2_FLAG == True and index[em][2] == "team2"):
+                    sheet.write(index[em][0], 1, "TEAM 2", style = team_style)
+                    continue
             sheet.write(index[em][0], 1, "NR", style = null_style)
 
     wb.save(XL_PATH)
